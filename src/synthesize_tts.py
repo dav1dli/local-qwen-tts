@@ -35,8 +35,8 @@ DTYPE = torch.float16
 MAX_CHARS_PER_CHUNK = 900
 PAUSE_BETWEEN_CHUNKS_SECONDS = 0.25
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-REFERENCE_AUDIO = PROJECT_ROOT / "reference.wav"
-REFERENCE_TEXT = PROJECT_ROOT / "reference.txt"
+REFERENCE_AUDIO = PROJECT_ROOT / "voices" / "reference.wav"
+REFERENCE_TEXT = PROJECT_ROOT / "voices" / "reference.txt"
 
 
 def format_duration(seconds):
@@ -157,9 +157,9 @@ def ffmpeg_run(args):
 def main():
     print(f"Process started: {PROCESS_STARTED_AT.strftime('%Y-%m-%d %H:%M:%S %Z')}")
     parser = argparse.ArgumentParser(
-        description="Synthesize a *-TTS.txt file with a saved voice and create WAV and MP3 outputs."
+        description="Synthesize a .txt file with a saved voice and create WAV and MP3 outputs."
     )
-    parser.add_argument("input", type=Path, help="Input text file, named like chapter-TTS.txt")
+    parser.add_argument("input", type=Path, help="Input text file")
     parser.add_argument(
         "--rate",
         type=float,
@@ -176,8 +176,8 @@ def main():
     input_path = args.input.expanduser().resolve()
     if not input_path.is_file():
         parser.error(f"input file not found: {input_path}")
-    if input_path.suffix.lower() != ".txt" or not input_path.stem.endswith("-TTS"):
-        parser.error("input must be a .txt file named like name-TTS.txt")
+    if input_path.suffix.lower() != ".txt":
+        parser.error("input must be a .txt file")
     if not 0.5 <= args.rate <= 2.0:
         parser.error("--rate must be between 0.5 and 2.0 for FFmpeg atempo")
     if shutil.which("ffmpeg") is None:
@@ -196,7 +196,7 @@ def main():
         if not instruction:
             parser.error("instruction file is empty")
 
-    output_stem = input_path.stem[:-4]
+    output_stem = input_path.stem
     wav_path = input_path.with_name(f"{output_stem}.wav")
     mp3_path = input_path.with_name(f"{output_stem}.mp3")
     chunks = split_text(text)

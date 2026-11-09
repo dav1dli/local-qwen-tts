@@ -1,6 +1,6 @@
 # Local Qwen3-TTS on macOS
 
-This workspace contains the upstream Qwen3-TTS source in `Qwen3-TTS/`, local scripts are in `src/`. They import cloned voices and synthesizing text.
+This workspace contains local scripts in `src/` and voice reference/profile files in `voices/`. The upstream Qwen3-TTS source is installed from a checkout in `Qwen3-TTS/`.
 
 Why? This process produces fairly natural sounding speech, especially in comparison with Azure Speech (which does not process the text semantically) which can be combined with the [Easy German Reading](https://github.com/dav1dli/easygerman) to synthesize audio texts.
 
@@ -60,8 +60,7 @@ Run these commands from the workspace root:
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-cd Qwen3-TTS
-python -m pip install -e .
+python -m pip install -e ./Qwen3-TTS
 ```
 
 The editable install uses the checked-out source and installs its Python dependencies. To activate the environment in a new terminal, run:
@@ -82,8 +81,8 @@ For Apple Silicon, expect `arm64` and `MPS available: True`. The test script cur
 
 Prepare two matching files:
 
-- `reference.wav`: a clear recording of the voice to clone. Use one speaker, with little background noise, music, reverberation, or processing. A few clean seconds can work; a longer, natural sample gives the model more voice and prosody to condition on.
-- `reference.txt`: a plain-text, verbatim transcript of the speech in that WAV. Keep the language and word order accurate; do not include Markdown, speaker labels, or notes that are not spoken.
+- `voices/reference.wav`: a clear recording of the voice to clone. Use one speaker, with little background noise, music, reverberation, or processing. A few clean seconds can work; a longer, natural sample gives the model more voice and prosody to condition on.
+- `voices/reference.txt`: a plain-text, verbatim transcript of the speech in that WAV. Keep the language and word order accurate; do not include Markdown, speaker labels, or notes that are not spoken.
 
 The transcript is required for the full reference-conditioned cloning mode used here. It is not the new text you want synthesized. Use audio you have permission to clone.
 
@@ -91,16 +90,16 @@ The transcript is required for the full reference-conditioned cloning mode used 
 python src/import_voice.py voices/reference.wav voices/reference.txt --name Otto
 ```
 
-This writes `voices/Otto.pt` in the workspace root. The profile contains the reference speech codes and speaker embedding, not the model weights. The model weights download on the first run and are cached locally; the model still loads into memory for each new Python process. If the selected profile does not exist, synthesis can create the default `Otto` profile from the workspace's `reference.wav` and `reference.txt` automatically.
+This writes `voices/Otto.pt` in the workspace. The profile contains the reference speech codes and speaker embedding, not the model weights. The model weights download on the first run and are cached locally; the model still loads into memory for each new Python process. If the selected profile does not exist, synthesis can create the default `Otto` profile automatically from `voices/reference.wav` and `voices/reference.txt`.
 
 ## Generate Speech
 
-Prepare a plain-text input named `name-TTS.txt`. The `-TTS` suffix distinguishes input text from the generated audio. Preserve paragraphs and normal dialogue punctuation; the Base clone model speaks the entire text in the selected cloned voice.
+Prepare a plain-text input file. The WAV and MP3 outputs use the same filename stem as the input. Preserve paragraphs and normal dialogue punctuation; the Base clone model speaks the entire text in the selected cloned voice.
 
 Select the saved voice and synthesize:
 
 ```bash
-python src/synthesize_tts.py path/to/name-TTS.txt --voice Otto
+python src/synthesize_tts.py path/to/name.txt --voice Otto
 ```
 
 The script chunks long text, then writes `name.wav` and `name.mp3` beside the input file. It uses a pitch-preserving 90% playback rate by default. Override the rate with `--rate 0.95` (closer to normal speed) or `--rate 0.85` (slower).
@@ -112,14 +111,14 @@ There are no documented inline emotion or speaker tags for the Base voice-clone 
 The converter also accepts one global natural-language delivery instruction, applied to each text chunk. Supply it directly:
 
 ```bash
-python src/synthesize_tts.py path/to/name-TTS.txt --voice Otto \
+python src/synthesize_tts.py path/to/name.txt --voice Otto \
     --instruction "Lies auf Deutsch wie ein ruhiger, warmherziger Erzähler. Sprich klar und bedächtig. Gestalte Dialoge lebendig, aber bleib bei derselben Stimme."
 ```
 
 Or put the instruction in a UTF-8 text file and pass its path:
 
 ```bash
-python src/synthesize_tts.py .path/to/name-TTS.txt --voice Otto \
+python src/synthesize_tts.py path/to/name.txt --voice Otto \
     --instruction-file instruction.txt
 ```
 
@@ -150,7 +149,7 @@ The workaround is near the imports in each script: it imports `requests` and `co
 - **Avoid Hugging Face checks after caching the model**: set `HF_HUB_OFFLINE=1` for a run to prevent Hub metadata requests. This works only after all required model files have been downloaded. From `Qwen3-TTS/`, for example:
 
     ```bash
-    HF_HUB_OFFLINE=1 python ../src/synthesize_tts.py path/to/name-TTS.txt --voice Otto
+    HF_HUB_OFFLINE=1 python ../src/synthesize_tts.py path/to/name.txt --voice Otto
     ```
 
 - **Hugging Face SSL certificate error**: confirm the temporary workaround is present in the script you are running. For a lasting fix, add the organization’s Zscaler root certificate to the certificate bundle used by Python, then remove the workaround.
