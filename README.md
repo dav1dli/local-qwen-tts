@@ -8,6 +8,12 @@ Imported high quality human or synthetic voices makes the output noticeably bett
 
 The scripts use the upstream PyTorch implementation (`Qwen3TTSModel`) with Apple Metal (MPS) on Apple Silicon. This is not the separate MLX implementation.
 
+## Limitation
+
+While Qwen3-TTS Base allows to import voices it ignores instructions for TTS synthesis. It works well on a narrated text, but in dialogs it is hard to tell participants apart. Trying to improve it with a prompt instructing the model to use different voice properties for different characters fails.
+
+There are other Qwen3-TTS flavors (VoiceDesign, CustomVoice), but they don't allow to import naturally sounding voices.
+
 ## Requirements
 
 - macOS with Apple Silicon is recommended. MPS should be available in the installed PyTorch.
