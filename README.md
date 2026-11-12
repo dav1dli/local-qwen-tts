@@ -100,6 +100,17 @@ This writes `voices/Otto.pt` in the workspace. The profile contains the referenc
 
 ## Generate Speech
 
+Prepare a plain-text input named `name-TTS.txt`. The `-TTS` suffix distinguishes input text from the generated audio. Preserve paragraphs and normal dialogue punctuation; the Base clone model speaks the entire text in the selected cloned voice.
+
+To convert a Markdown chapter to TTS input, install the Markdown parser in the activated environment and run the converter from the workspace root:
+
+```bash
+python -m pip install markdown-it-py
+python markdown_to_tts.py de/kapitel-01.md --output de/kapitel-01-converted-TTS.txt
+```
+
+This keeps the chapter text and removes Markdown formatting, images, HTML tooltips, and the chapter's vocabulary and sentence appendices. Appendix removal starts at a recognized heading such as `Neue und schwierige Wörter`, `Schwierige Sätze`, `Vocabulary`, or `Glossary`. Without `--output`, the output is named `de/kapitel-01-TTS.txt`. Existing output is not overwritten unless `--force` is supplied.
+
 Prepare a plain-text input file. The WAV and MP3 outputs use the same filename stem as the input. Preserve paragraphs and normal dialogue punctuation; the Base clone model speaks the entire text in the selected cloned voice.
 
 Select the saved voice and synthesize:
